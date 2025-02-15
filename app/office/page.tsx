@@ -1,9 +1,19 @@
 'use client';
-import { useState } from 'react';
+import { useState , useEffect} from 'react';
+import { useRouter } from 'next/navigation';
 import DbStatus from '@/components/DbStatus';
 import Link from 'next/link';
 
 export default function Office() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Check if user is authenticated
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [router]);
   const [formData, setFormData] = useState({
     name: '',
     salary: '',
