@@ -84,22 +84,11 @@ export default function Office() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    router.push('/login');
-  };
+  // ... existing handleChange function ...
 
   return (
     <main className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Office Management</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-        >
-          Logout
-        </button>
-      </div>
+      <h1 className="text-2xl font-bold mb-6">Office Management</h1>
       <div className="max-w-md">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

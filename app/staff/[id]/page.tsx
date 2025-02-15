@@ -32,7 +32,7 @@ async function getParams(params: PageProps['params']) {
 export default function EmployeePage({ params }: PageProps) {
   const [docReference, setDocReference] = useState('');
   const [id, setId] = useState('');
-  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [employee] = useState<Employee | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -49,7 +49,7 @@ export default function EmployeePage({ params }: PageProps) {
     };
 
     setDocReference(generateDocReference());
-  }, []); // Generate once when component mounts
+  }, [params]); // Generate once when component mounts
 
   if (!id) return null;
 

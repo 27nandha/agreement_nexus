@@ -27,7 +27,7 @@ const OfficialSeal = ({ className, docReference }: OfficialSealProps) => {
       />
         </div>
       
-      <div className="flex justify-between items-center px-4 text-gray-700">
+        <div className="flex flex-col md:flex-row justify-between items-center px-4 text-gray-700 space-y-2 md:space-y-0">
         <div className="text-sm">
           <span className="font-semibold">Approval Date:</span> {today}
         </div>

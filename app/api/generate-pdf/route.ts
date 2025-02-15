@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     // Set viewport to a large size
     await page.setViewport({
       width: 1200,
-      height: 800
+      height: 750 
     });
 
     // Wait for the page to load
