@@ -71,7 +71,7 @@ export default function EmployeeDetails({ id }: { id: string }) {  // Changed fr
         </div>
 
         <p className="mb-6">
-          This Employment Contract ( `&quot;` Contract `&quot;` ) is made and entered into on the {formattedDate}, by and between:
+          This Employment Contract ("Contract") is made and entered into on the {formattedDate}, by and between:
         </p>
 
         <div className="mb-6">

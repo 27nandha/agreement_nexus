@@ -66,7 +66,7 @@ export default function HomePage() {
             <div className="md:w-1/2">
               <h2 className="text-3xl font-bold mb-6">About Us</h2>
               <p className="text-gray-600 mb-4">
-                We are a team of passionate professionals dedicated to delivering exceptional solutions for our clients. With years of experience in the industry, we understand what it takes to succeed in today&apos;s digital landscape.
+                We are a team of passionate professionals dedicated to delivering exceptional solutions for our clients. With years of experience in the industry, we understand what it takes to succeed in today's digital landscape.
               </p>
               <p className="text-gray-600 mb-6">
                 Our mission is to help businesses thrive by leveraging cutting-edge technology and innovative strategies.

@@ -13,7 +13,7 @@ interface HeaderProps {
   docReference: string;
 }
 
-const Header = ({ docReference }: HeaderProps) => {
+const Header = ({ staffId, docReference }: HeaderProps) => {
   return (
     <header className="w-full">
       <div className="bg-[#2845a7] text-white">

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import SignaturePad from 'react-signature-canvas';
+import PDFDownloadButton from './PDFDownloadButton';
 
 interface PersonalDetails {
   firstName: string;
@@ -48,6 +49,7 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
     accountNumber: '',
     agreedToTerms: false
   });
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -220,6 +222,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
+      setIsSubmitted(true);
       alert('Agreement signed and personal details saved successfully!');
     } catch (error) {
       console.error('Error:', error);
