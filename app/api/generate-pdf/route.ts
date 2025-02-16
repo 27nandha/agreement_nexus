@@ -1,4 +1,5 @@
-import puppeteer from 'puppeteer';
+import chromium from '@sparticuz/chromium-min';
+import puppeteer from 'puppeteer-core';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -6,7 +7,10 @@ export async function POST(request: Request) {
     const { url, formData } = await request.json();
     
     const browser = await puppeteer.launch({
-      headless: true
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: true,
     });
     
     const page = await browser.newPage();
