@@ -8,7 +8,7 @@ export default function HomePage() {
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center text-center">
-            <h1 className="text-5xl font-bold mb-6">Welcome to CompanyName</h1>
+            <h1 className="text-5xl font-bold mb-6">Welcome to Nexus International Alliance Pvt Ltd</h1>
             <p className="text-xl mb-8 max-w-2xl">
               Transforming ideas into innovative solutions. We help businesses grow through cutting-edge technology and strategic consulting.
             </p>

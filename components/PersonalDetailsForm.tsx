@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import SignaturePad from 'react-signature-canvas';
 import PDFDownloadButton from './PDFDownloadButton';
 
@@ -30,6 +31,7 @@ interface PersonalDetailsFormProps {
 }
 
 export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormProps) {
+  const router = useRouter();
   const signaturePadRef = useRef<SignaturePad>(null);
   const [formData, setFormData] = useState<PersonalDetails>({
     firstName: '',
@@ -134,61 +136,16 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if signature exists
-    if (!signaturePadRef.current) {
-      alert('Signature pad not initialized');
-      return;
-    }
-    
-    const hasSignature = signaturePadRef.current.toData().length > 0;
-    if (!hasSignature) {
-      alert('Please provide your signature before submitting');
-      return;
-    }
-
-    // Check if ID card is uploaded
-    if (!formData.idCard) {
-      alert('Please upload your ID card before submitting');
+    // Validation checks...
+    if (!signaturePadRef.current?.toData().length || !formData.idCard) {
+      alert('Please complete all required fields');
       return;
     }
 
     try {
       setIsGeneratingPDF(true);
 
-      // First submit the form data
-      const formDataToSend = {
-        firstName: formData.firstName,
-        middleName: formData.middleName,
-        lastName: formData.lastName,
-        dateOfBirth: formData.dateOfBirth,
-        nationality: formData.nationality,
-        nicPassport: formData.nicPassport,
-        currentAddress: formData.currentAddress,
-        mobilePhone: formData.mobilePhone,
-        homePhone: formData.homePhone,
-        email: formData.email,
-        startDate: formData.startDate,
-        emergencyContactName: formData.emergencyContactName,
-        emergencyContactPhone: formData.emergencyContactPhone,
-        bankName: formData.bankName,
-        accountNumber: formData.accountNumber
-      };
-
-      console.log('Account Number being sent:', formData.accountNumber);
-
-      const response = await fetch(`/api/employees/${employeeId}/personal-details`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formDataToSend),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save personal details');
-      }
-
-      // Then generate and download PDF
+      // First generate and download PDF
       const signaturePad = document.querySelector('canvas');
       const currentSignature = signaturePad?.toDataURL('image/png');
 
@@ -211,6 +168,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         throw new Error('PDF generation failed');
       }
 
+      // Download PDF
       const blob = await pdfResponse.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -218,12 +176,43 @@ const handleSubmit = async (e: React.FormEvent) => {
       a.download = 'employee-agreement.pdf';
       document.body.appendChild(a);
       a.click();
-      
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
+      // After successful PDF download, save personal details
+      const formDataToSend = {
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        nationality: formData.nationality,
+        nicPassport: formData.nicPassport,
+        currentAddress: formData.currentAddress,
+        mobilePhone: formData.mobilePhone,
+        homePhone: formData.homePhone,
+        email: formData.email,
+        startDate: formData.startDate,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        bankName: formData.bankName,
+        accountNumber: formData.accountNumber
+      };
+
+      const response = await fetch(`/api/employees/${employeeId}/personal-details`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formDataToSend),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save personal details');
+      }
+
       setIsSubmitted(true);
       alert('Agreement signed and personal details saved successfully!');
+      router.push('/contact-admin');
     } catch (error) {
       console.error('Error:', error);
       alert('Error processing your request');
