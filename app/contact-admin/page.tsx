@@ -23,8 +23,8 @@ export default function ContactAdmin() {
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-blue-800">Contact Information</h3>
                 <div className="mt-2 text-sm text-blue-700">
-                  <p>Email: admin@nexusalliance.com</p>
-                  <p>Phone: +94 123 456 789</p>
+                  <p>Email: info@icgnia.com</p>
+                  <p>Phone: +94 713343824</p>
                 </div>
               </div>
             </div>
