@@ -3,30 +3,40 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
-  const router = useRouter();
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '',
     password: '',
   });
   const [error, setError] = useState('');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCredentials(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo purposes, using hardcoded credentials
-    // In production, this should be properly authenticated against a backend
-    if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      localStorage.setItem('isAuthenticated', 'true');
-      router.push('/office');
-    } else {
-      setError('Invalid credentials');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('isAuthenticated', 'true');
+        router.push('/office');
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (error) {
+      setError('An error occurred during login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -41,13 +51,13 @@ export default function Login() {
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block mb-2">Username:</label>
+            <label htmlFor="email" className="block mb-2">Email:</label>
             <input
-              type="text"
-              id="username"
-              name="username"
-              value={credentials.username}
-              onChange={handleChange}
+              type="email"
+              id="email"
+              name="email"
+              value={credentials.email}
+              onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
               className="w-full p-2 border rounded"
               required
             />
@@ -59,16 +69,17 @@ export default function Login() {
               id="password"
               name="password"
               value={credentials.password}
-              onChange={handleChange}
+              onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
               className="w-full p-2 border rounded"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            disabled={isLoading}
+            className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            Login
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>
