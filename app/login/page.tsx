@@ -1,75 +1,77 @@
 'use client';
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const router = useRouter();
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        localStorage.setItem('isAuthenticated', 'true');
-        router.push("/office");
-      } else {
-        setError(data.message);
-      }
-    } catch (error) {
-      setError("An error occurred during login");
+    // For demo purposes, using hardcoded credentials
+    // In production, this should be properly authenticated against a backend
+    if (credentials.username === 'admin' && credentials.password === 'admin123') {
+      localStorage.setItem('isAuthenticated', 'true');
+      router.push('/office');
+    } else {
+      setError('Invalid credentials');
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-        <h2 className="text-2xl font-semibold text-center mb-6">Admin Login</h2>
+    <main className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 className="text-2xl font-bold mb-6 text-center">Admin Login</h1>
         {error && (
-          <div className="bg-red-50 text-red-500 p-3 rounded mb-4">
+          <div className="mb-4 p-2 bg-red-100 text-red-600 rounded">
             {error}
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 mb-2">Email</label>
+            <label htmlFor="username" className="block mb-2">Username:</label>
             <input
-              type="email"
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              id="username"
+              name="username"
+              value={credentials.username}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
               required
             />
           </div>
           <div>
-            <label className="block text-gray-700 mb-2">Password</label>
+            <label htmlFor="password" className="block mb-2">Password:</label>
             <input
               type="password"
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              id="password"
+              name="password"
+              value={credentials.password}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
               required
             />
           </div>
-          <button 
-            type="submit" 
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors"
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Login
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,8 +1,8 @@
 'use client';
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
 import SignaturePad from 'react-signature-canvas';
 import PDFDownloadButton from './PDFDownloadButton';
+import { useRouter } from 'next/navigation';
 
 interface PersonalDetails {
   firstName: string;
@@ -31,7 +31,6 @@ interface PersonalDetailsFormProps {
 }
 
 export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormProps) {
-  const router = useRouter();
   const signaturePadRef = useRef<SignaturePad>(null);
   const [formData, setFormData] = useState<PersonalDetails>({
     firstName: '',
@@ -53,6 +52,28 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const router = useRouter();
+  const idChecked = useRef(false);
+
+  useEffect(() => {
+    const checkExistingDetails = async () => {
+      if (idChecked.current) return;
+      
+      try {
+        const response = await fetch(`/api/employees/${employeeId}/personal-details`);
+        if (response.ok) {
+          // If details exist, redirect
+          router.push('/contact-admin');
+          return;
+        }
+        idChecked.current = true;
+      } catch (error) {
+        console.error('Error checking details:', error);
+      }
+    };
+
+    checkExistingDetails();
+  }, [employeeId, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -136,16 +157,28 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation checks...
-    if (!signaturePadRef.current?.toData().length || !formData.idCard) {
-      alert('Please complete all required fields');
+    // Check if signature exists
+    if (!signaturePadRef.current) {
+      alert('Signature pad not initialized');
+      return;
+    }
+    
+    const hasSignature = signaturePadRef.current.toData().length > 0;
+    if (!hasSignature) {
+      alert('Please provide your signature before submitting');
+      return;
+    }
+
+    // Check if ID card is uploaded
+    if (!formData.idCard) {
+      alert('Please upload your ID card before submitting');
       return;
     }
 
     try {
       setIsGeneratingPDF(true);
 
-      // First generate and download PDF
+      // Generate and download PDF first
       const signaturePad = document.querySelector('canvas');
       const currentSignature = signaturePad?.toDataURL('image/png');
 
@@ -179,7 +212,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      // After successful PDF download, save personal details
+      // After successful PDF download, save to database
       const formDataToSend = {
         firstName: formData.firstName,
         middleName: formData.middleName,
@@ -210,9 +243,9 @@ const handleSubmit = async (e: React.FormEvent) => {
         throw new Error('Failed to save personal details');
       }
 
-      setIsSubmitted(true);
       alert('Agreement signed and personal details saved successfully!');
-      router.push('/contact-admin');
+      router.push('/success'); // Or wherever you want to redirect after completion
+      
     } catch (error) {
       console.error('Error:', error);
       alert('Error processing your request');

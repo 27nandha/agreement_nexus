@@ -1,6 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface Employee {
     name: string;
@@ -22,44 +21,30 @@ interface Employee {
     createdAt: string;
   }
 
-export default function EmployeeDetails({ id }: { id: string }) {
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const idChecked = useRef(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    const checkPersonalDetails = async () => {
-      if (idChecked.current) return;
-      
-      try {
-        const response = await fetch(`/api/employees/${id}/personal-details`);
-        if (response.ok) {
-          // If personal details exist, redirect
-          router.push('/contact-admin');
-          return;
+export default function EmployeeDetails({ id }: { id: string }) {  // Changed from employeeId to id
+    const [employee, setEmployee] = useState<Employee | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+  
+    useEffect(() => {
+      const fetchEmployee = async () => {
+        try {
+          const response = await fetch(`/api/employees/${id}`);  // Changed from employeeId to id
+          if (!response.ok) {
+            throw new Error('Employee not found');
+          }
+          const data = await response.json();
+          setEmployee(data);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch employee');
+        } finally {
+          setLoading(false);
         }
-        
-        // If personal details don't exist, load employee data
-        const employeeResponse = await fetch(`/api/employees/${id}`);
-        if (!employeeResponse.ok) {
-          throw new Error('Employee not found');
-        }
-        const data = await employeeResponse.json();
-        setEmployee(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch employee');
-      } finally {
-        idChecked.current = true;
-        setLoading(false);
-      }
-    };
-
-    checkPersonalDetails();
-  }, [id, router]);
-
-  const formattedDate = new Date().toLocaleDateString('en-US', {
+      };
+  
+      fetchEmployee();
+    }, [id]);
+    const formattedDate = new Date().toLocaleDateString('en-US', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
