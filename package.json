@@ -16,7 +16,6 @@
     "@sparticuz/chromium": "^132.0.0",
     "@types/react-signature-canvas": "^1.0.7",
     "bcryptjs": "^3.0.0",
-    "chrome-aws-lambda": "^10.1.0",
     "cookie": "^1.0.2",
     "framer-motion": "^12.4.3",
     "html2canvas": "^1.4.1",
