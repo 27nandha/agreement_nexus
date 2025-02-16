@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "postinstall": "apt-get update && apt-get install -y libnss3",
     "build": "next build",
     "start": "next start",
     "lint": "echo 'Skipping ESLint' && exit 0"
@@ -12,8 +13,10 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^6.4.3",
+    "@sparticuz/chromium": "^132.0.0",
     "@types/react-signature-canvas": "^1.0.7",
     "bcryptjs": "^3.0.0",
+    "chrome-aws-lambda": "^10.1.0",
     "cookie": "^1.0.2",
     "framer-motion": "^12.4.3",
     "html2canvas": "^1.4.1",
@@ -25,6 +28,7 @@
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.0",
     "puppeteer": "^24.2.0",
+    "puppeteer-core": "^24.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.4.0",
