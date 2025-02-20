@@ -1,8 +1,7 @@
-'use client';
-import { useState, useRef, useEffect } from 'react';
-import SignaturePad from 'react-signature-canvas';
-import PDFDownloadButton from './PDFDownloadButton';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState, useRef, useEffect } from "react";
+import SignaturePad from "react-signature-canvas";
+import { useRouter } from "next/navigation";
 
 interface PersonalDetails {
   firstName: string;
@@ -30,27 +29,28 @@ interface PersonalDetailsFormProps {
   employeeId: string;
 }
 
-export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormProps) {
+export default function PersonalDetailsForm({
+  employeeId,
+}: PersonalDetailsFormProps) {
   const signaturePadRef = useRef<SignaturePad>(null);
   const [formData, setFormData] = useState<PersonalDetails>({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    dateOfBirth: '',
-    nationality: '',
-    nicPassport: '',
-    currentAddress: '',
-    mobilePhone: '',
-    homePhone: '',
-    email: '',
-    startDate: '',
-    emergencyContactName: '',
-    emergencyContactPhone: '',
-    bankName: '',
-    accountNumber: '',
-    agreedToTerms: false
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    dateOfBirth: "",
+    nationality: "",
+    nicPassport: "",
+    currentAddress: "",
+    mobilePhone: "",
+    homePhone: "",
+    email: "",
+    startDate: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    bankName: "",
+    accountNumber: "",
+    agreedToTerms: false,
   });
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const router = useRouter();
   const idChecked = useRef(false);
@@ -58,28 +58,32 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
   useEffect(() => {
     const checkExistingDetails = async () => {
       if (idChecked.current) return;
-      
+
       try {
-        const response = await fetch(`/api/employees/${employeeId}/personal-details`);
+        const response = await fetch(
+          `/api/employees/${employeeId}/personal-details`
+        );
         if (response.ok) {
           // If details exist, redirect
-          router.push('/contact-admin');
+          router.push("/contact-admin");
           return;
         }
         idChecked.current = true;
       } catch (error) {
-        console.error('Error checking details:', error);
+        console.error("Error checking details:", error);
       }
     };
 
     checkExistingDetails();
   }, [employeeId, router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -95,7 +99,7 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement("canvas");
           let width = img.width;
           let height = img.height;
 
@@ -119,11 +123,11 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
           canvas.width = width;
           canvas.height = height;
 
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
 
           // Compress and convert to base64
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 0.7 quality
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7); // 0.7 quality
           resolve(compressedBase64);
         };
         img.src = e.target?.result as string;
@@ -135,84 +139,84 @@ export default function PersonalDetailsForm({ employeeId }: PersonalDetailsFormP
   const handleIdCardUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        alert('File size should be less than 5MB');
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        alert("File size should be less than 5MB");
         return;
       }
 
       try {
         const compressedBase64 = await compressImage(file);
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           idCard: file,
-          idCardPreview: compressedBase64
+          idCardPreview: compressedBase64,
         }));
-    } catch (error) {
-        console.error('Error compressing image:', error);
-        alert('Error processing image');
+      } catch (error) {
+        console.error("Error compressing image:", error);
+        alert("Error processing image");
       }
     }
-};
+  };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Check if signature exists
+  
     if (!signaturePadRef.current) {
-      alert('Signature pad not initialized');
+      alert("Signature pad not initialized");
       return;
     }
-    
+  
     const hasSignature = signaturePadRef.current.toData().length > 0;
     if (!hasSignature) {
-      alert('Please provide your signature before submitting');
+      alert("Please provide your signature before submitting");
       return;
     }
-
-    // Check if ID card is uploaded
+  
     if (!formData.idCard) {
-      alert('Please upload your ID card before submitting');
+      alert("Please upload your ID card before submitting");
       return;
     }
-
+  
     try {
       setIsGeneratingPDF(true);
-
-      // Generate and download PDF first
-      const signaturePad = document.querySelector('canvas');
-      const currentSignature = signaturePad?.toDataURL('image/png');
-
-      const pdfResponse = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  
+      // Get signature image data
+      const currentSignature = signaturePadRef.current.toDataURL("image/png");
+  
+      // Generate and download PDF
+      const pdfResponse = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url: window.location.href,
           formData: {
             ...formData,
-            digitalSignature: currentSignature || '',
-            idCardPreview: formData.idCardPreview || ''
-          }
-        })
+            digitalSignature: currentSignature,
+            idCardPreview: formData.idCardPreview || "",
+          },
+        }),
       });
-
-      if (!pdfResponse.ok) {
-        throw new Error('PDF generation failed');
-      }
-
+  
+      if (!pdfResponse.ok) throw new Error("PDF generation failed");
+  
       // Download PDF
       const blob = await pdfResponse.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'employee-agreement.pdf';
+      a.download = "employee-agreement.pdf";
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-
-      // After successful PDF download, save to database
+      window.URL.revokeObjectURL(url);
+  
+      console.log("PDF downloaded successfully.");
+  
+      // Ensure the PDF is fully downloaded before proceeding
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+  
+      // Save data to database
       const formDataToSend = {
         firstName: formData.firstName,
         middleName: formData.middleName,
@@ -228,36 +232,37 @@ const handleSubmit = async (e: React.FormEvent) => {
         emergencyContactName: formData.emergencyContactName,
         emergencyContactPhone: formData.emergencyContactPhone,
         bankName: formData.bankName,
-        accountNumber: formData.accountNumber
+        accountNumber: formData.accountNumber,
       };
-
-      const response = await fetch(`/api/employees/${employeeId}/personal-details`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formDataToSend),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save personal details');
-      }
-
-      alert('Agreement signed and personal details saved successfully!');
-      router.push('/success'); // Or wherever you want to redirect after completion
-      
+  
+      const response = await fetch(
+        `/api/employees/${employeeId}/personal-details`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formDataToSend),
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to save personal details");
+  
+      alert("Agreement signed and personal details saved successfully!");
+      router.push("/success"); // Redirect after completion
     } catch (error) {
-      console.error('Error:', error);
-      alert('Error processing your request');
+      console.error("Error:", error);
+      alert("Error processing your request. Please try again.");
     } finally {
       setIsGeneratingPDF(false);
     }
-};
+  };
+  
 
   return (
     <div className="bg-[#F8FAFC] p-8 rounded-lg max-w-5xl mx-auto">
-      <h1 className="text-[#1E3A8A] text-2xl font-bold mb-8">Employee Information & Signature</h1>
-      
+      <h1 className="text-[#1E3A8A] text-2xl font-bold mb-8">
+        Employee Information & Signature
+      </h1>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -411,71 +416,75 @@ const handleSubmit = async (e: React.FormEvent) => {
               required
             />
           </div>
-          </div>
+        </div>
 
         {/* Emergency Contact Information */}
         <div>
-          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">Emergency Contact Information</h2>
+          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">
+            Emergency Contact Information
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+            <div>
               <label className="block text-[#1E3A8A] font-medium mb-2">
                 Contact Name<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="emergencyContactName"
-              value={formData.emergencyContactName}
-              onChange={handleChange}
+              </label>
+              <input
+                type="text"
+                name="emergencyContactName"
+                value={formData.emergencyContactName}
+                onChange={handleChange}
                 className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+                required
+              />
+            </div>
 
-          <div>
+            <div>
               <label className="block text-[#1E3A8A] font-medium mb-2">
                 Contact Phone<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="tel"
-              name="emergencyContactPhone"
-              value={formData.emergencyContactPhone}
-              onChange={handleChange}
+              </label>
+              <input
+                type="tel"
+                name="emergencyContactPhone"
+                value={formData.emergencyContactPhone}
+                onChange={handleChange}
                 className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+                required
+              />
             </div>
           </div>
-          </div>
+        </div>
 
         {/* Bank Account Details */}
         <div>
-          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">Bank Account Details</h2>
+          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">
+            Bank Account Details
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
+            <div>
               <label className="block text-[#1E3A8A] font-medium mb-2">
-              Bank Name<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="bankName"
-              value={formData.bankName}
-              onChange={handleChange}
+                Bank Name<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="bankName"
+                value={formData.bankName}
+                onChange={handleChange}
                 className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+                required
+              />
+            </div>
 
-          <div>
+            <div>
               <label className="block text-[#1E3A8A] font-medium mb-2">
                 Account Number<span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
+              </label>
+              <input
+                type="text"
                 name="accountNumber"
                 value={formData.accountNumber}
-              onChange={handleChange}
+                onChange={handleChange}
                 className="w-full p-3 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
+                required
               />
             </div>
           </div>
@@ -483,35 +492,69 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         {/* ID Card Upload */}
         <div className="mt-8">
-          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">ID Card Upload*</h2>
+          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">
+            ID Card Upload*
+          </h2>
           <div className="border-2 border-dashed border-[#E2E8F0] rounded-lg p-8 text-center">
             {formData.idCardPreview ? (
               <div className="space-y-4">
                 <div className="relative max-w-md mx-auto">
-                  <img 
-                    src={formData.idCardPreview} 
-                    alt="ID Card Preview" 
+                  <img
+                    src={formData.idCardPreview}
+                    alt="ID Card Preview"
                     className="max-w-full h-auto rounded-lg shadow-md"
                   />
                   <button
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, idCard: undefined, idCardPreview: undefined }))}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        idCard: undefined,
+                        idCardPreview: undefined,
+                      }))
+                    }
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
-                <p className="text-sm text-gray-500">Click the X to remove and upload a different file</p>
+                <p className="text-sm text-gray-500">
+                  Click the X to remove and upload a different file
+                </p>
               </div>
             ) : (
               <div className="flex flex-col items-center">
-                <svg className="w-12 h-12 text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                <svg
+                  className="w-12 h-12 text-blue-500 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
                 </svg>
-                <p className="text-[#1E3A8A] mb-2">Drag and drop your ID card or click to browse</p>
-                <p className="text-sm text-gray-500">Supported formats: PDF, JPG, PNG (Max 5MB)</p>
+                <p className="text-[#1E3A8A] mb-2">
+                  Drag and drop your ID card or click to browse
+                </p>
+                <p className="text-sm text-gray-500">
+                  Supported formats: PDF, JPG, PNG (Max 5MB)
+                </p>
                 <label className="mt-4 px-4 py-2 bg-blue-100 text-blue-600 rounded-md hover:bg-blue-200 cursor-pointer">
                   <span>Upload File</span>
                   <input
@@ -528,12 +571,14 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         {/* Digital Signature */}
         <div className="mt-8">
-          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">Digital Signature*</h2>
+          <h2 className="text-[#1E3A8A] text-xl font-bold mb-4">
+            Digital Signature*
+          </h2>
           <div className="border border-[#E2E8F0] rounded-lg p-4 bg-white">
             <SignaturePad
               ref={signaturePadRef}
               canvasProps={{
-                className: "w-full h-40 border border-gray-200 rounded"
+                className: "w-full h-40 border border-gray-200 rounded",
               }}
             />
             <button
@@ -554,7 +599,12 @@ const handleSubmit = async (e: React.FormEvent) => {
               id="terms"
               name="agreedToTerms"
               checked={formData.agreedToTerms}
-              onChange={(e) => setFormData(prev => ({ ...prev, agreedToTerms: e.target.checked }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  agreedToTerms: e.target.checked,
+                }))
+              }
               className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
             />
             <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
@@ -563,18 +613,18 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           <div className="mt-8 space-y-4">
-          <button
-            type="submit"
+            <button
+              type="submit"
               disabled={!formData.agreedToTerms || isGeneratingPDF}
               className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-              {isGeneratingPDF ? 'Please wait for few minutes to generate agreement...' : 'Submit & Sign Agreement'}
-          </button>
+            >
+              {isGeneratingPDF
+                ? "Please wait for few minutes to generate agreement..."
+                : "Submit & Sign Agreement"}
+            </button>
           </div>
         </div>
       </form>
     </div>
   );
 }
-
-  

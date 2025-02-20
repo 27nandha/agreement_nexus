@@ -1,22 +1,20 @@
+import puppeteer from "puppeteer";
 import { NextResponse } from "next/server";
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
 
 export async function POST(request: Request) {
   try {
     const { url, formData } = await request.json();
 
-    const browser = await puppeteer.launch({
-      args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: true,
-    });
-
+    const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
+
+    // Set an initial viewport
+    await page.setViewport({ width: 1200, height: 800 });
+
+    // Navigate to the page
     await page.goto(url, { waitUntil: "networkidle0" });
 
-    // Fill form data
+    // Fill form fields
     if (formData) {
       await page.evaluate((data) => {
         Object.entries(data).forEach(([key, value]) => {
@@ -32,37 +30,60 @@ export async function POST(request: Request) {
           }
         });
       }, formData);
-
-      // Handle ID card preview
-      if (formData.idCardPreview) {
-        await page.evaluate((preview) => {
-          const dropZone = document.querySelector(".border-dashed");
-          if (dropZone) {
-            dropZone.innerHTML = `<img src="${preview}" alt="ID Card Preview" class="max-w-full h-auto rounded-lg shadow-md">`;
-          }
-        }, formData.idCardPreview);
-      }
-
-      // Handle signature
-      if (formData.digitalSignature) {
-        await page.evaluate((signature) => {
-          const canvas = document.querySelector("canvas");
-          if (canvas) {
-            const img = document.createElement("img");
-            img.src = signature;
-            img.style.width = canvas.style.width;
-            img.style.height = canvas.style.height;
-            canvas.replaceWith(img);
-          }
-        }, formData.digitalSignature);
-      }
     }
+
+    // Handle ID card preview
+    if (formData.idCardPreview) {
+      await page.evaluate((idCardPreview) => {
+        const dropZone = document.querySelector(".border-dashed");
+        if (dropZone) {
+          dropZone.innerHTML = `<img src="${idCardPreview}" alt="ID Card Preview" class="max-w-full h-auto rounded-lg shadow-md">`;
+        }
+      }, formData.idCardPreview);
+
+      await page.waitForSelector('img[alt="ID Card Preview"]');
+    }
+
+    // Handle signature
+    if (formData.digitalSignature) {
+      await page.evaluate((signatureData) => {
+        const canvas = document.querySelector("canvas");
+        if (canvas) {
+          const img = document.createElement("img");
+          img.src = signatureData;
+          img.style.width = canvas.style.width;
+          img.style.height = canvas.style.height;
+          canvas.replaceWith(img);
+        }
+      }, formData.digitalSignature);
+    }
+
+    // **Fix Extra White Space**  
+    await page.evaluate(() => {
+      // Remove elements that add extra space (if applicable)
+      const footer = document.querySelector("footer");
+      if (footer) footer.style.marginTop = "0";
+
+      // Ensure body fits content exactly
+      document.body.style.minHeight = "auto";
+      document.documentElement.style.minHeight = "auto";
+    });
+
+    // **Fix Height Calculation**
+    const height = await page.evaluate(() => {
+      return document.documentElement.offsetHeight;
+    });
+
+    // Set exact height to remove empty space
+    await page.setViewport({ width: 1200, height });
 
     // Generate PDF
     const pdf = await page.pdf({
-      format: "A4",
+      width: "1200px",
+      height: `${height}px`,
       printBackground: true,
-      margin: { top: "20px", right: "20px", bottom: "20px", left: "20px" },
+      margin: { top: "10px", bottom: "10px", left: "10px", right: "10px" },
+      scale: 0.8,
     });
 
     await browser.close();
@@ -75,9 +96,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("PDF generation error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate PDF" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
   }
 }
