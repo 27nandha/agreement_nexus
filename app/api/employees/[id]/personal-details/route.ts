@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import mongoose from "mongoose";
 
-// Define schema
 const personalDetailsSchema = new mongoose.Schema({
   employeeId: { type: String, unique: true, required: true },
   firstName: { type: String, required: true },
@@ -23,25 +22,24 @@ const personalDetailsSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Ensure model is not redefined
+// Ensure the model is not redefined
 const PersonalDetails =
   mongoose.models.PersonalDetails ||
   mongoose.model("PersonalDetails", personalDetailsSchema);
 
-// ✅ Fix: Extract params correctly from `request`'s URL
-export async function GET(request: Request) {
+// ✅ Fix: Correctly extract `id` from dynamic route parameters
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
 
-    // Extract `id` from URL
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
+    if (!params.id) {
       return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
 
-    const personalDetails = await PersonalDetails.findOne({ employeeId: id });
+    const personalDetails = await PersonalDetails.findOne({ employeeId: params.id });
 
     if (!personalDetails) {
       return NextResponse.json({ exists: false }, { status: 404 });
@@ -58,23 +56,22 @@ export async function GET(request: Request) {
 }
 
 // ✅ Fix: Correct parameter handling in `POST`
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
     const data = await request.json();
 
-    // Extract `id` from URL
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
+    if (!params.id) {
       return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
 
-    data.employeeId = id;
+    data.employeeId = params.id;
 
     const personalDetails = await PersonalDetails.findOneAndUpdate(
-      { employeeId: id },
+      { employeeId: params.id },
       data,
       { upsert: true, new: true }
     );
