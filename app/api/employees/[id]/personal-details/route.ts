@@ -26,59 +26,46 @@ const PersonalDetails =
   mongoose.models.PersonalDetails ||
   mongoose.model("PersonalDetails", personalDetailsSchema);
 
-  export async function POST(
-    request: Request,
-    context: { params: { id: string } }
-  ) {
-    try {
-      const params = await context.params; // ✅ Await params
-  
-      await connectDB();
-      const data = await request.json();
-  
-      if (!params?.id) {
-        return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });
-      }
-  
-      if (!mongoose.Types.ObjectId.isValid(params.id)) {
-        return NextResponse.json({ error: 'Invalid employee ID format' }, { status: 400 });
-      }
-  
-      // ✅ Add employeeId safely
-      data.employeeId = params.id;
-  
-      // ✅ Use params.id safely
-      const personalDetails = await PersonalDetails.findOneAndUpdate(
-        { employeeId: params.id },
-        data,
-        { upsert: true, new: true }
-      );
-  
-      return NextResponse.json({ success: true, data: personalDetails });
-    } catch (error) {
-      console.error('🚨 Error saving personal details:', error);
-      return NextResponse.json(
-        { error: 'Failed to save personal details' },
-        { status: 500 }
-      );
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+    const data = await request.json();
+
+    if (!params?.id) {
+      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
+
+    // ✅ No need to check ObjectId validation since `employeeId` is a string
+
+    // ✅ Assign employeeId before saving
+    data.employeeId = params.id;
+
+    const personalDetails = await PersonalDetails.findOneAndUpdate(
+      { employeeId: params.id },
+      data,
+      { upsert: true, new: true }
+    );
+
+    return NextResponse.json({ success: true, data: personalDetails });
+  } catch (error) {
+    console.error("🚨 Error saving personal details:", error);
+    return NextResponse.json(
+      { error: "Failed to save personal details" },
+      { status: 500 }
+    );
   }
-  
-  
+}
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params; // ✅ Await params
-
     if (!params?.id) {
-      return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'Invalid employee ID format' }, { status: 400 });
+      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
 
     await connectDB();
@@ -91,7 +78,10 @@ export async function GET(
 
     return NextResponse.json(personalDetails);
   } catch (error) {
-    console.error('🚨 Error fetching personal details:', error);
-    return NextResponse.json({ error: 'Failed to fetch personal details' }, { status: 500 });
+    console.error("🚨 Error fetching personal details:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch personal details" },
+      { status: 500 }
+    );
   }
 }
