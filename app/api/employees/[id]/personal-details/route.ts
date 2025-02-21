@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import mongoose from "mongoose";
 
+// Define schema
 const personalDetailsSchema = new mongoose.Schema({
-  employeeId: { type: String, unique: true, required: true }, // Ensure uniqueness
+  employeeId: { type: String, unique: true, required: true },
   firstName: { type: String, required: true },
   middleName: String,
   lastName: { type: String, required: true },
@@ -22,55 +23,25 @@ const personalDetailsSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Ensure model is not redefined
 const PersonalDetails =
   mongoose.models.PersonalDetails ||
   mongoose.model("PersonalDetails", personalDetailsSchema);
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+// ✅ Fix: Extract params correctly from `request`'s URL
+export async function GET(request: Request) {
   try {
     await connectDB();
-    const data = await request.json();
 
-    if (!params?.id) {
+    // Extract `id` from URL
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
       return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
 
-    // ✅ No need to check ObjectId validation since `employeeId` is a string
-
-    // ✅ Assign employeeId before saving
-    data.employeeId = params.id;
-
-    const personalDetails = await PersonalDetails.findOneAndUpdate(
-      { employeeId: params.id },
-      data,
-      { upsert: true, new: true }
-    );
-
-    return NextResponse.json({ success: true, data: personalDetails });
-  } catch (error) {
-    console.error("🚨 Error saving personal details:", error);
-    return NextResponse.json(
-      { error: "Failed to save personal details" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    if (!params?.id) {
-      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
-    }
-
-    await connectDB();
-
-    const personalDetails = await PersonalDetails.findOne({ employeeId: params.id });
+    const personalDetails = await PersonalDetails.findOne({ employeeId: id });
 
     if (!personalDetails) {
       return NextResponse.json({ exists: false }, { status: 404 });
@@ -81,6 +52,38 @@ export async function GET(
     console.error("🚨 Error fetching personal details:", error);
     return NextResponse.json(
       { error: "Failed to fetch personal details" },
+      { status: 500 }
+    );
+  }
+}
+
+// ✅ Fix: Correct parameter handling in `POST`
+export async function POST(request: Request) {
+  try {
+    await connectDB();
+    const data = await request.json();
+
+    // Extract `id` from URL
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
+    }
+
+    data.employeeId = id;
+
+    const personalDetails = await PersonalDetails.findOneAndUpdate(
+      { employeeId: id },
+      data,
+      { upsert: true, new: true }
+    );
+
+    return NextResponse.json({ success: true, data: personalDetails });
+  } catch (error) {
+    console.error("🚨 Error saving personal details:", error);
+    return NextResponse.json(
+      { error: "Failed to save personal details" },
       { status: 500 }
     );
   }
