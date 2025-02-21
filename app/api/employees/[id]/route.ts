@@ -26,10 +26,10 @@ const Employee = mongoose.models.Employee || mongoose.model('Employee', employee
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } } // ✅ params is inside context
+  { params }: { params: { id: string } } // ✅ Extract params directly
 ) {
   try {
-    const { id } = context.params; // ✅ No need to await params
+    const { id } = params; // ✅ Access params directly
 
     if (!id) {
       return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });

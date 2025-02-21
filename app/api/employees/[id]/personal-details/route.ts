@@ -28,13 +28,14 @@ const PersonalDetails =
   mongoose.model("PersonalDetails", personalDetailsSchema);
 
 // ✅ **GET request to fetch employee details**
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } } // ✅ Use params from the second argument
+) {
   try {
     await connectDB();
 
-    // Extract the `id` from the URL
-    const url = new URL(request.url);
-    const id = url.pathname.split("/").pop(); // Extract the last segment of the URL
+    const { id } = params; // ✅ Extract id from params
 
     if (!id) {
       return NextResponse.json(
@@ -62,14 +63,15 @@ export async function GET(request: NextRequest) {
 }
 
 // ✅ **POST request to create or update employee details**
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } } // ✅ Use params from the second argument
+) {
   try {
     await connectDB();
     const data = await request.json();
 
-    // Extract the `id` from the URL
-    const url = new URL(request.url);
-    const id = url.pathname.split("/").pop(); // Extract the last segment of the URL
+    const { id } = params; // ✅ Extract id from params
 
     if (!id) {
       return NextResponse.json(
