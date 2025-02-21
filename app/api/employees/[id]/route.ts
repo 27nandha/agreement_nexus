@@ -26,30 +26,34 @@ const Employee = mongoose.models.Employee || mongoose.model('Employee', employee
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } } // ✅ params is inside context
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params; // ✅ Await params
-
-    if (!params?.id) {
-      return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });
-    }
-
+    // Validate if the ID is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'Invalid employee ID format' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid employee ID format' },
+        { status: 400 }
+      );
     }
 
     await connectDB();
-
-    const employee = await Employee.findById(params.id).select('-__v').lean();
-
+    
+    const employee = await Employee.findById(params.id).select('-__v');
+    
     if (!employee) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Employee not found' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(employee);
   } catch (error) {
-    console.error('🚨 Error fetching employee:', error);
-    return NextResponse.json({ error: 'Failed to fetch employee' }, { status: 500 });
+    console.error('Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch employee' },
+      { status: 500 }
+    );
   }
 }
