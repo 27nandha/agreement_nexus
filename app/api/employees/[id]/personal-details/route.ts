@@ -93,5 +93,6 @@ export async function POST(request: NextRequest) {
       { error: "Failed to save personal details" },
       { status: 500 }
     );
+  
   }
 }
