@@ -27,7 +27,7 @@ const PersonalDetails =
   mongoose.models.PersonalDetails ||
   mongoose.model("PersonalDetails", personalDetailsSchema);
 
-// ✅ Fix: Correctly extract `id` from dynamic route parameters
+// ✅ **GET request to fetch employee details**
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -35,11 +35,16 @@ export async function GET(
   try {
     await connectDB();
 
-    if (!params.id) {
-      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
+    if (!params?.id) {
+      return NextResponse.json(
+        { error: "Employee ID is required" },
+        { status: 400 }
+      );
     }
 
-    const personalDetails = await PersonalDetails.findOne({ employeeId: params.id });
+    const personalDetails = await PersonalDetails.findOne({
+      employeeId: params.id,
+    });
 
     if (!personalDetails) {
       return NextResponse.json({ exists: false }, { status: 404 });
@@ -55,7 +60,7 @@ export async function GET(
   }
 }
 
-// ✅ Fix: Correct parameter handling in `POST`
+// ✅ **POST request to create or update employee details**
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -64,8 +69,11 @@ export async function POST(
     await connectDB();
     const data = await request.json();
 
-    if (!params.id) {
-      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
+    if (!params?.id) {
+      return NextResponse.json(
+        { error: "Employee ID is required" },
+        { status: 400 }
+      );
     }
 
     data.employeeId = params.id;
