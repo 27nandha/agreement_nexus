@@ -6,14 +6,12 @@ if (!process.env.MONGO_URI) {
 
 const MONGO_URI = process.env.MONGO_URI;
 
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
- */
+
+{/* eslint-disable-next-line */}
 let cached = (global as any).mongoose;
 
 if (!cached) {
+  {/* eslint-disable-next-line */}
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 

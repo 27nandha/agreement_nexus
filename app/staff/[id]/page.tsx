@@ -48,7 +48,7 @@ export default function EmployeePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header staffId={id} docReference={docReference} />
+      <Header docReference={docReference} />
 
       <div className="flex-grow bg-gray-50 py-8">
         <EmployeeAgreement
