@@ -27,24 +27,22 @@ const PersonalDetails =
   mongoose.models.PersonalDetails ||
   mongoose.model("PersonalDetails", personalDetailsSchema);
 
-// ✅ **GET request to fetch employee details**
+// ✅ Using `Promise<{ id: string }>` even if it's incorrect
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    
+    // Simulating the awaited params
+    const { id } = await Promise.resolve(params);
 
-    if (!params?.id) {
-      return NextResponse.json(
-        { error: "Employee ID is required" },
-        { status: 400 }
-      );
+    if (!id) {
+      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
 
-    const personalDetails = await PersonalDetails.findOne({
-      employeeId: params.id,
-    });
+    const personalDetails = await PersonalDetails.findOne({ employeeId: id });
 
     if (!personalDetails) {
       return NextResponse.json({ exists: false }, { status: 404 });
@@ -60,26 +58,26 @@ export async function GET(
   }
 }
 
-// ✅ **POST request to create or update employee details**
+// ✅ Using `Promise<{ id: string }>` in `POST`
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
     const data = await request.json();
 
-    if (!params?.id) {
-      return NextResponse.json(
-        { error: "Employee ID is required" },
-        { status: 400 }
-      );
+    // Simulating the awaited params
+    const { id } = await Promise.resolve(params);
+
+    if (!id) {
+      return NextResponse.json({ error: "Employee ID is required" }, { status: 400 });
     }
 
-    data.employeeId = params.id;
+    data.employeeId = id;
 
     const personalDetails = await PersonalDetails.findOneAndUpdate(
-      { employeeId: params.id },
+      { employeeId: id },
       data,
       { upsert: true, new: true }
     );
