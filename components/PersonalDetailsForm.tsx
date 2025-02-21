@@ -63,24 +63,26 @@ export default function PersonalDetailsForm({
         const response = await fetch(
           `/api/employees/${employeeId}/personal-details`
         );
+
         if (response.ok) {
-          // If details exist, redirect
-          router.push("/contact-admin");
+          router.replace("/contact-admin"); // 🔹 `replace` prevents back navigation
           return;
         }
+
         idChecked.current = true;
       } catch (error) {
         console.error("Error checking details:", error);
       }
     };
 
-    checkExistingDetails();
+    if (employeeId) checkExistingDetails(); // 🔹 Ensure employeeId is available before calling
   }, [employeeId, router]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -161,30 +163,30 @@ export default function PersonalDetailsForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (!signaturePadRef.current) {
-      alert("Signature pad not initialized");
+      alert("Signature pad is not initialized.");
       return;
     }
-  
+
     const hasSignature = signaturePadRef.current.toData().length > 0;
     if (!hasSignature) {
-      alert("Please provide your signature before submitting");
+      alert("Please provide your signature before submitting.");
       return;
     }
-  
-    if (!formData.idCard) {
-      alert("Please upload your ID card before submitting");
+
+    if (!formData.idCardPreview) {
+      alert("Please upload your ID card before submitting.");
       return;
     }
-  
+
     try {
       setIsGeneratingPDF(true);
-  
-      // Get signature image data
+
+      // 🔹 Step 1: Get Signature Data
       const currentSignature = signaturePadRef.current.toDataURL("image/png");
-  
-      // Generate and download PDF
+
+      // 🔹 Step 2: Generate PDF first (no database updates yet)
       const pdfResponse = await fetch("/api/generate-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -197,10 +199,10 @@ export default function PersonalDetailsForm({
           },
         }),
       });
-  
-      if (!pdfResponse.ok) throw new Error("PDF generation failed");
-  
-      // Download PDF
+
+      if (!pdfResponse.ok) throw new Error("PDF generation failed.");
+
+      // 🔹 Step 3: Download PDF
       const blob = await pdfResponse.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -210,13 +212,13 @@ export default function PersonalDetailsForm({
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-  
-      console.log("PDF downloaded successfully.");
-  
-      // Ensure the PDF is fully downloaded before proceeding
+
+      console.log("✅ PDF downloaded successfully.");
+
+      // 🔹 Step 4: Ensure PDF is downloaded before saving data
       await new Promise((resolve) => setTimeout(resolve, 2000));
-  
-      // Save data to database
+
+      // 🔹 Step 5: Save Data to Database
       const formDataToSend = {
         firstName: formData.firstName,
         middleName: formData.middleName,
@@ -234,7 +236,7 @@ export default function PersonalDetailsForm({
         bankName: formData.bankName,
         accountNumber: formData.accountNumber,
       };
-  
+
       const response = await fetch(
         `/api/employees/${employeeId}/personal-details`,
         {
@@ -243,19 +245,25 @@ export default function PersonalDetailsForm({
           body: JSON.stringify(formDataToSend),
         }
       );
-  
-      if (!response.ok) throw new Error("Failed to save personal details");
-  
-      alert("Agreement signed and personal details saved successfully!");
-      router.push("/success"); // Redirect after completion
+
+      if (!response.ok) throw new Error("Failed to save personal details.");
+
+      console.log("✅ Employee details saved successfully.");
+      alert("Agreement signed and personal details saved!");
+      router.push("/success");
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error processing your request. Please try again.");
+      console.error("🚨 Error:", error);
+
+      // Type assertion to handle error message safely
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsGeneratingPDF(false);
     }
   };
-  
 
   return (
     <div className="bg-[#F8FAFC] p-8 rounded-lg max-w-5xl mx-auto">
@@ -616,11 +624,35 @@ export default function PersonalDetailsForm({
             <button
               type="submit"
               disabled={!formData.agreedToTerms || isGeneratingPDF}
-              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {isGeneratingPDF
-                ? "Please wait for few minutes to generate agreement..."
-                : "Submit & Sign Agreement"}
+              {isGeneratingPDF ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 mr-2 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4l-3 3m7 5l-3 3v4a8 8 0 008-8h-4l-3-3z"
+                    ></path>
+                  </svg>
+                  Generating Agreement...
+                </>
+              ) : (
+                "Submit & Sign Agreement"
+              )}
             </button>
           </div>
         </div>

@@ -1,5 +1,7 @@
-'use client';
-import { useState, useEffect } from 'react';
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation"; // Import useParams
 import EmployeeDetails from "@/components/EmployeeDetails";
 import Header from "@/components/Header";
 import PersonalDetailsForm from "@/components/PersonalDetailsForm";
@@ -14,59 +16,42 @@ import AgreementSection from "@/components/AggreementSection";
 import OfficialSeal from "@/components/OfficialSeal";
 import Footer from "@/components/Footer";
 
-interface Employee {
-  name: string;
-}
-
-interface PageProps {
-  params: Promise<{ id: string }> | { id: string };
-}
-
-async function getParams(params: PageProps['params']) {
-  if (params instanceof Promise) {
-    return (await params).id;
-  }
-  return params.id;
-}
-
-export default function EmployeePage({ params }: PageProps) {
-  const [docReference, setDocReference] = useState('');
-  const [id, setId] = useState('');
-  const [employee, setEmployee] = useState<Employee | null>(null);
+export default function EmployeePage() {
+  const params = useParams(); // Unwrap params
+  const [docReference, setDocReference] = useState("");
+  const [id, setId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const init = async () => {
-      const employeeId = await getParams(params);
-      setId(employeeId);
-    };
-    init();
+    if (params?.id) {
+      setId(params.id as string);
+    }
 
+    // Generate document reference ID only once when component mounts
     const generateDocReference = () => {
-      const prefix = 'NIA_DEA';
+      const prefix = "NIA_DEA";
       const timestamp = Date.now();
       const random = Math.floor(Math.random() * 10000);
       return `${prefix}-${timestamp}${random}-5690`;
     };
-
     setDocReference(generateDocReference());
-  }, []); // Generate once when component mounts
+  }, [params]);
 
-  if (!id) return null;
+  if (!id) return <div>Loading...</div>; // Ensure ID is available before rendering
 
   const policies = [
     { name: "Employment Agreement" },
     { name: "Privacy Policy" },
     { name: "Teams and Collaboration Policy" },
     { name: "Training Agreement" },
-    { name: "Code of Conduct and Ethics" }
+    { name: "Code of Conduct and Ethics" },
   ];
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header staffId={id} docReference={docReference} />
-      
+
       <div className="flex-grow bg-gray-50 py-8">
-        <EmployeeAgreement 
+        <EmployeeAgreement
           companyName="Nexus International Alliance Pvt. Ltd."
           establishedYear={2022}
         />
@@ -79,7 +64,7 @@ export default function EmployeePage({ params }: PageProps) {
         <div className=" bg-gray-50">
           <EmployeeConditions />
         </div>
-        
+
         <div className=" bg-gray-50">
           <EmployeeDetails id={id} />
         </div>
@@ -93,12 +78,9 @@ export default function EmployeePage({ params }: PageProps) {
           <CodeOfConduct />
         </div>
         <div className=" bg-gray-50">
-          <AgreementSection 
-            policies={policies}
-            employeeName={employee?.name || ''}
-          />
+          <AgreementSection policies={policies} />
         </div>
-        
+
         <PersonalDetailsForm employeeId={id} />
         <div className="bg-gray-50 p-8">
           <OfficialSeal docReference={docReference} />
